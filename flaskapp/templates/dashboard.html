@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    
+    <!-- Page Views Chart -->
+    <div class="content-section">
+        <h2>Page Views Per Day</h2>
+        <div id="viewsChart" class="chart"></div>
+    </div>
+    <!-- Gender Equality Chart -->
+<div class="content-section">
+    <h2>Gender Equality Analysis</h2>
+    <div id="genderChart" class="chart"></div>
+    <p class="mt-3">
+        This scatter plot shows the relationship between the percentage of female population and Labour Party support across constituencies. It helps understand the influence of gender demographics on voting patterns.
+    </p>
+</div>
+
+<!-- Vulnerable Female Groups Visualization -->
+<div class="content-section">
+    <h2>Party Support Among Vulnerable Female Groups</h2>
+    <div id="vulnerableChart" class="chart"></div>
+    <p class="mt-3">
+        This bar chart compares political party support in constituencies with high populations of vulnerable female groups (non-homeowners, students, and retired women).
+    </p>
+</div>
+
+<!-- Error display section (will only show if there's an error) -->
+<div id="error-section" style="display: none;" class="alert alert-danger">
+    <p id="error-message"></p>
+</div>
+
+<!-- Plotly.js -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+    // Error handling function
+    function handleError(message) {
+        document.getElementById('error-section').style.display = 'block';
+        document.getElementById('error-message').innerText = message;
+    }
+
+    // Safe plot function
+    function safelyCreatePlot(elementId, data, fallbackTitle) {
+        try {
+            Plotly.newPlot(elementId, data.data, data.layout);
+        } catch (error) {
+            handleError(`Error creating ${fallbackTitle} chart: ${error.message}`);
+            // Create an empty placeholder chart
+            Plotly.newPlot(elementId, [{
+                x: ['Error'],
+                y: [0],
+                type: 'bar'
+            }], {
+                title: `${fallbackTitle} - Error Loading Data`
+            });
+        }
+    }
+
+    // Wait for the DOM to be loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            // Create the views chart
+            var viewsData = {{ views_graph | safe }};
+            safelyCreatePlot('viewsChart', viewsData, 'Page Views');
+        } catch (error) {
+            handleError('Error with page views data: ' + error.message);
+        }
+
+        try {
+            // Create the gender analysis chart
+            var genderData = {{ gender_graph | safe }};
+            safelyCreatePlot('genderChart', genderData, 'Gender Analysis');
+        } catch (error) {
+            handleError('Error with gender analysis data: ' + error.message);
+        }
+
+        try {
+            // Create the vulnerable female groups chart
+            var vulnerableData = {{ vulnerable_graph | safe }};
+            safelyCreatePlot('vulnerableChart', vulnerableData, 'Vulnerable Groups');
+        } catch (error) {
+            handleError('Error with vulnerable groups data: ' + error.message);
+        }
+    });
+</script>
+
+<style>
+    .chart {
+        width: 100%;
+        height: 450px;
+        margin-bottom: 20px;
+    }
+    
+    .content-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    h2 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        padding: 15px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
